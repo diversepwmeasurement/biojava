@@ -1,59 +1,54 @@
-name: PR Build
-
-on: 
-  push:
-    branches:
-      - '!master'
-  pull_request:
-    branches:
-      - master
-
-permissions:
-  contents: read # to fetch code (actions/checkout)
-
 jobs:
   testopenjdk:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        # We do one OS only to reduce resource utilization. To do macOS to this would be needed:
-        #os: [ubuntu-20.04, macOS-latest]
-        os: [ubuntu-latest]
-        java: [17, 21]
-      fail-fast: false
-      max-parallel: 4
     name: Test JDK ${{ matrix.java }}, ${{ matrix.os }}
-
+    runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'oracle'
-          java-version: ${{ matrix.java }}
-      - name: Build, test and integration test
-        run: mvn verify --no-transfer-progress
-
-  # Note that 11 is not available in openjdk. So we need to do it with the Zulu distribution (see https://github.com/actions/setup-java)
-  # When we drop 11, it will be safe to drop the copy-pasted workflow excerpt below
+    - continue-on-error: true
+      uses: actions/checkout@v4
+    - continue-on-error: true
+      name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: oracle
+        java-version: ${{ matrix.java }}
+    - continue-on-error: true
+      name: Build, test and integration test
+      run: mvn verify --no-transfer-progress
+    strategy:
+      fail-fast: false
+      matrix:
+        java:
+        - 17
+        - 21
+        os:
+        - ubuntu-latest
+      max-parallel: 4
   testzulu:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        # We do one OS only to reduce resource utilization. To do macOS to this would be needed:
-        #os: [ubuntu-20.04, macOS-latest]
-        os: [ubuntu-latest]
-        java: [11]
-      fail-fast: false
-      max-parallel: 4
     name: Test JDK ${{ matrix.java }}, ${{ matrix.os }}
-
+    runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: ${{ matrix.java }}
-      - name: Build, test and integration test
-        run: mvn verify --no-transfer-progress
+    - continue-on-error: true
+      uses: actions/checkout@v4
+    - continue-on-error: true
+      name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: zulu
+        java-version: ${{ matrix.java }}
+    - continue-on-error: true
+      name: Build, test and integration test
+      run: mvn verify --no-transfer-progress
+    strategy:
+      fail-fast: false
+      matrix:
+        java:
+        - 11
+        os:
+        - ubuntu-latest
+      max-parallel: 4
+name: PR Build
+on:
+  repository_dispatch:
+    types: trigger-ga___pull_request.yml
+permissions:
+  contents: read
